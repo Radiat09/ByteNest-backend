@@ -20,7 +20,7 @@ const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   });
 });
 
-const stripeWebhookHandler = catchAsync(async (req: Request, res: Response) => {
+const stripeWebhookHandler = catchAsync(async (req: Request & { rawBody?: Buffer }, res: Response) => {
   let event;
 
   // Skip signature verification in development if no webhook secret configured
