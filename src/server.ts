@@ -6,7 +6,10 @@ import seedDatabase from "./app/seed/seed";
 const startServer = async () => {
   try {
     await connectDB(config.mongodbUri);
-    await seedDatabase();
+
+    if (config.nodeEnv === "development") {
+      await seedDatabase();
+    }
 
     app.listen(config.port, () => {
       console.log(`Server running on port ${config.port}`);
