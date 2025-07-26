@@ -38,15 +38,6 @@ export interface ICategory {
   updatedAt?: Date;
 }
 
-export interface ICart {
-  _id?: string;
-  productId: string;
-  email: string;
-  quantity: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
 export interface IWishlist {
   _id?: string;
   email: string;
