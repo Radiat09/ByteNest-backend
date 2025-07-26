@@ -11,7 +11,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: [config.frontendUrl, "http://localhost:3000"],
+    origin:
+      config.nodeEnv === "production"
+        ? [config.frontendUrl]
+        : [config.frontendUrl, "http://localhost:3000"],
     credentials: true,
   }),
 );
@@ -21,7 +24,10 @@ const apiLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many requests, please try again later." },
+  message: {
+    success: false,
+    message: "Too many requests, please try again later.",
+  },
 });
 
 const authLimiter = rateLimit({
@@ -29,7 +35,10 @@ const authLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many login attempts, please try again later." },
+  message: {
+    success: false,
+    message: "Too many login attempts, please try again later.",
+  },
 });
 
 app.use("/auth/login", authLimiter);
@@ -39,26 +48,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const rawBodySaver = (req: Request, res: Response, next: any) => {
-  const chunks: Buffer[] = [];
-  req.on("data", (chunk: Buffer) => chunks.push(chunk));
-  req.on("end", () => {
+app.post(
+  "/orders/webhooks",
+  express.raw({ type: "application/json" }),
+  (req: Request & { rawBody?: Buffer }, _res, next) => {
     try {
-      req.rawBody = Buffer.concat(chunks);
-      req.body = JSON.parse(req.rawBody.toString());
-      next();
-    } catch (err) {
-      res.status(400).send("Invalid JSON");
+      req.rawBody = req.body;
+      req.body = JSON.parse(req.rawBody!.toString());
+    } catch {
+      req.body = {};
     }
-  });
-  req.on("error", () => {
-    res.status(400).send("Request error");
-  });
-};
-
-app.use("/orders/webhooks", rawBodySaver);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    next();
+  },
+);
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Server is running");
