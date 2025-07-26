@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import Order from "./order.model";
-import Cart from "../cart/cart.model";
 import { IOrder } from "../../interfaces/index.d";
 import createStripeSession from "./order.stripe";
 import AppError from "../../errorHelpers/AppError";
@@ -12,22 +11,37 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
   mongoSession.startTransaction();
 
   try {
-    const newOrder = new Order(ordersData);
-    const orderResult = await newOrder.save({ session: mongoSession });
-    const orderId = orderResult._id.toString();
-
     if (paymentMethod === "COD") {
-      await Cart.deleteMany({ email: customerDetail!.email.toLowerCase() }, { session: mongoSession });
+      const newOrder = new Order(ordersData);
+      const orderResult = await newOrder.save({ session: mongoSession });
       await mongoSession.commitTransaction();
       mongoSession.endSession();
       return { orderId: orderResult._id, message: "Order placed successfully" };
     }
 
     if (paymentMethod === "Stripe") {
-      const url = await createStripeSession(orderId, cartData as any[], customerDetail);
+      const tempOrder = new Order(ordersData);
+      const tempResult = await tempOrder.save({ session: mongoSession });
+      const orderId = tempResult._id.toString();
+
+      const stripeResult = await createStripeSession(orderId, cartData as any[], customerDetail);
+
+      const statusMap: Record<string, string> = {
+        paid: "completed",
+        unpaid: "pending",
+        no_payment_required: "completed",
+      };
+      const paymentStatus = (statusMap[stripeResult.payment_status] as IOrder["paymentStatus"]) || "pending";
+
+      await Order.findByIdAndUpdate(
+        orderId,
+        { $set: { paymentStatus } },
+        { session: mongoSession }
+      );
+
       await mongoSession.commitTransaction();
       mongoSession.endSession();
-      return { url };
+      return { url: stripeResult.url };
     }
 
     throw new AppError("Invalid payment method", 400);
@@ -45,14 +59,9 @@ const handleStripeWebhook = async (event: any): Promise<void> => {
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const sessionData = event.data.object;
-      const { orderID, cartIDs } = sessionData.metadata;
+      const { orderID } = sessionData.metadata;
 
       await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "completed" } }, { session: mongoSession });
-
-      if (cartIDs) {
-        const parsedCartIds = JSON.parse(cartIDs);
-        await Cart.deleteMany({ _id: { $in: parsedCartIds } }, { session: mongoSession });
-      }
     }
 
     if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
@@ -83,8 +92,13 @@ const getCancelledOrders = async (email: string): Promise<any[]> => {
   }).sort({ createdAt: -1 });
 };
 
+const VALID_ORDER_STATUSES = ["pending", "completed", "cancelled"];
+
 const updateOrderStatus = async (id: string, status: string): Promise<any> => {
-  return Order.findByIdAndUpdate(id, { $set: { orderStatus: status } }, { new: true });
+  if (!VALID_ORDER_STATUSES.includes(status)) {
+    throw new AppError(`Invalid status. Allowed: ${VALID_ORDER_STATUSES.join(", ")}`, 400);
+  }
+  return Order.findByIdAndUpdate(id, { $set: { orderStatus: status } }, { new: true, runValidators: true });
 };
 
 const getAllOrders = async (): Promise<any[]> => {
