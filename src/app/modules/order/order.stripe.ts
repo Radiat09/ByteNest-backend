@@ -7,7 +7,7 @@ const createStripeSession = async (
   orderId: string,
   cartData: any[],
   customerDetail: any
-): Promise<string> => {
+): Promise<{ url: string; payment_status: string; status: string }> => {
   const lineItems = cartData.map((item: any) => ({
     price_data: {
       currency: "bdt",
@@ -20,13 +20,10 @@ const createStripeSession = async (
     quantity: item.quantity,
   }));
 
-  const cartIDs = cartData.map((item: any) => item._id || item.cartID);
-
   const session = await stripe.checkout.sessions.create({
     line_items: lineItems,
     metadata: {
       orderID: orderId,
-      cartIDs: JSON.stringify(cartIDs),
       email: customerDetail.email.toLowerCase(),
     },
     mode: "payment",
@@ -34,7 +31,11 @@ const createStripeSession = async (
     cancel_url: `${config.frontendUrl}/payment/cancel?orderId=${orderId}`,
   });
 
-  return session.url!;
+  return {
+    url: session.url!,
+    payment_status: session.payment_status,
+    status: session.status,
+  };
 };
 
 export default createStripeSession;
