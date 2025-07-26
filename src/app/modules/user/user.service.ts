@@ -16,7 +16,7 @@ const createUser = async (payload: Partial<IUser>): Promise<IUser> => {
   }
 
   const hashedPassword = await bcrypt.hash(payload.password, SALT_ROUNDS);
-  const newUser = new User({ ...payload, password: hashedPassword });
+  const newUser = new User({ ...payload, password: hashedPassword, role: "user" });
   return newUser.save();
 };
 
