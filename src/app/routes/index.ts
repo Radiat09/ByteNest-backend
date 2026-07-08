@@ -6,6 +6,7 @@ import categoryRoutes from "../modules/category/category.route";
 import cartRoutes from "../modules/cart/cart.route";
 import wishlistRoutes from "../modules/wishlist/wishlist.route";
 import orderRoutes from "../modules/order/order.route";
+import uploadRoutes from "../modules/upload/upload.route";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ const moduleRoutes = [
   { path: "/cart", route: cartRoutes },
   { path: "/wishlist", route: wishlistRoutes },
   { path: "/orders", route: orderRoutes },
+  { path: "/upload", route: uploadRoutes },
 ];
 
 moduleRoutes.forEach(({ path, route }) => router.use(path, route));

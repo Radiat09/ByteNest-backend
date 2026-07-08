@@ -12,7 +12,7 @@ Node.js/Express REST API for ByteNest electronics store, written in TypeScript.
 | Auth | JWT, bcrypt |
 | Payments | Stripe, COD |
 | Validation | Zod |
-| File Upload | Cloudinary |
+| File Upload | Cloudinary (server-side) |
 
 ## Getting Started
 
@@ -20,6 +20,8 @@ Node.js/Express REST API for ByteNest electronics store, written in TypeScript.
 
 - Node.js 18+
 - MongoDB (local or Atlas)
+- Cloudinary account (for image uploads)
+- Stripe account (for payments)
 
 ### Install
 
@@ -45,6 +47,9 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_ENDPOINT_SECRET=whsec_your_stripe_webhook_secret
 FRONTEND_URL=http://localhost:3000
 NODE_ENV=development
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 ### Run
@@ -69,46 +74,17 @@ src/
 │   ├── middlewares/              # Auth, error handler, validation, notFound
 │   ├── modules/
 │   │   ├── auth/                # Register, login, JWT
-│   │   │   ├── auth.controller.ts
-│   │   │   └── auth.route.ts
 │   │   ├── cart/                # Add, update, remove cart items
-│   │   │   ├── cart.controller.ts
-│   │   │   ├── cart.model.ts
-│   │   │   ├── cart.route.ts
-│   │   │   └── cart.service.ts
 │   │   ├── category/            # CRUD categories
-│   │   │   ├── category.controller.ts
-│   │   │   ├── category.model.ts
-│   │   │   ├── category.route.ts
-│   │   │   └── category.service.ts
 │   │   ├── order/               # Orders, Stripe checkout
-│   │   │   ├── order.constants.ts
-│   │   │   ├── order.controller.ts
-│   │   │   ├── order.model.ts
-│   │   │   ├── order.route.ts
-│   │   │   ├── order.service.ts
-│   │   │   └── order.stripe.ts
 │   │   ├── product/             # CRUD products
-│   │   │   ├── product.constants.ts
-│   │   │   ├── product.controller.ts
-│   │   │   ├── product.model.ts
-│   │   │   ├── product.route.ts
-│   │   │   └── product.service.ts
+│   │   ├── upload/              # Server-side image upload to Cloudinary
 │   │   ├── user/                # User management
-│   │   │   ├── user.constants.ts
-│   │   │   ├── user.controller.ts
-│   │   │   ├── user.model.ts
-│   │   │   ├── user.route.ts
-│   │   │   └── user.service.ts
 │   │   └── wishlist/            # Add/remove wishlist
-│   │       ├── wishlist.controller.ts
-│   │       ├── wishlist.model.ts
-│   │       ├── wishlist.route.ts
-│   │       └── wishlist.service.ts
 │   ├── routes/                  # Route aggregator
 │   └── utils/                   # JWT, query builder, response, catchAsync
-├── app.ts                       # Express app setup
-└── server.ts                    # Server entry point
+├── app.ts
+└── server.ts
 ```
 
 ## API Endpoints
@@ -175,6 +151,18 @@ src/
 | GET | `/user/count` | Total user count |
 | GET | `/users` | List all users (admin) |
 | GET | `/customers` | List customers (admin) |
+
+### Image Upload
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/upload` | Upload image to Cloudinary (admin, multipart/form-data) |
+| DELETE | `/upload` | Delete image from Cloudinary (admin) |
+
+- Accepts `image/jpeg`, `image/png`, `image/webp`, `image/gif`
+- Max file size: 5MB
+- Optional `?folder=` query param (default: `products`)
+- Returns `{ url, publicId }`
 
 ### Payments (Stripe)
 
