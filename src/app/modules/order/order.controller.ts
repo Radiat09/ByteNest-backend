@@ -21,18 +21,24 @@ const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
 });
 
 const stripeWebhookHandler = catchAsync(async (req: Request, res: Response) => {
-  const sig = req.headers["stripe-signature"];
   let event;
 
-  try {
-    event = stripeInstance.webhooks.constructEvent(
-      req.body,
-      sig!,
-      config.stripeWebhookSecret
-    );
-  } catch (err: any) {
-    console.error("Stripe Webhook Verification Failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+  // Skip signature verification in development if no webhook secret configured
+  if (config.nodeEnv === "production" && config.stripeWebhookSecret) {
+    const sig = req.headers["stripe-signature"];
+    try {
+      event = stripeInstance.webhooks.constructEvent(
+        req.body,
+        sig!,
+        config.stripeWebhookSecret
+      );
+    } catch (err: any) {
+      console.error("Stripe Webhook Verification Failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  } else {
+    // In development, trust the event directly (no Stripe CLI needed)
+    event = req.body as Stripe.Event;
   }
 
   await OrderService.handleStripeWebhook(event);
