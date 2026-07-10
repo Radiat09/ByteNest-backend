@@ -5,6 +5,7 @@ import { checkAuth } from "../../middlewares/checkAuth";
 const router = Router();
 
 router.get("/", ProductController.getProducts);
+router.get("/suggestions", ProductController.getSearchSuggestions);
 router.get("/count", ProductController.getProductCount);
 router.get("/:id", ProductController.getProductById);
 router.post("/", checkAuth("admin"), ProductController.createProduct);

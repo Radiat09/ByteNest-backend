@@ -41,7 +41,7 @@ const buildProductQuery = (queryParams: ProductQuery) => {
   return query;
 };
 
-const getProducts = async (queryParams: ProductQuery): Promise<any[]> => {
+const getProducts = async (queryParams: ProductQuery) => {
   const { limit, sortBy, sortOrder, searchText, page } = queryParams;
   const query = buildProductQuery(queryParams);
 
@@ -50,15 +50,18 @@ const getProducts = async (queryParams: ProductQuery): Promise<any[]> => {
     sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
   }
 
-  const limitInt = parseInt(limit || "3000", 10);
-  const pageInt = parseInt(page || "0", 10);
+  const limitInt = parseInt(limit || "12", 10);
+  const pageInt = parseInt(page || "1", 10);
+  const skip = (pageInt - 1) * limitInt;
+
+  const total = await Product.countDocuments(query);
 
   let cursor = Product.find(query);
   if (sortBy) {
     cursor = cursor.sort(sortOptions);
   }
 
-  let result = await cursor.skip(pageInt * limitInt).limit(limitInt).lean();
+  let result = await cursor.skip(skip).limit(limitInt).lean();
 
   if (searchText) {
     const text = searchText.toLowerCase();
@@ -79,7 +82,13 @@ const getProducts = async (queryParams: ProductQuery): Promise<any[]> => {
       .sort((a: any, b: any) => b._score - a._score);
   }
 
-  return result;
+  return {
+    products: result,
+    total,
+    page: pageInt,
+    limit: limitInt,
+    totalPages: Math.ceil(total / limitInt),
+  };
 };
 
 const getProductCount = async (queryParams: ProductQuery): Promise<number> => {
@@ -104,9 +113,21 @@ const deleteProduct = async (id: string): Promise<IProduct | null> => {
   return Product.findByIdAndDelete(id);
 };
 
+const getSearchSuggestions = async (searchText: string): Promise<any[]> => {
+  if (!searchText || searchText.trim().length === 0) return [];
+  const regex = new RegExp(searchText, "i");
+  return Product.find({
+    $or: [{ title: regex }, { category: regex }],
+  })
+    .select("title category imageUrl")
+    .limit(8)
+    .lean();
+};
+
 export const ProductService = {
   getProducts,
   getProductCount,
+  getSearchSuggestions,
   getProductById,
   createProduct,
   updateProduct,

@@ -60,9 +60,16 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSearchSuggestions = catchAsync(async (req: Request, res: Response) => {
+  const searchText = (req.query.searchText as string) || "";
+  const result = await ProductService.getSearchSuggestions(searchText);
+  res.json(result);
+});
+
 export const ProductController = {
   getProducts,
   getProductCount,
+  getSearchSuggestions,
   getProductById,
   createProduct,
   updateProduct,
