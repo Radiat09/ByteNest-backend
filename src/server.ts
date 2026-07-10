@@ -1,10 +1,12 @@
 import app from "./app";
 import config from "./app/config/env";
 import connectDB from "./app/config/db";
+import seedDatabase from "./app/seed/seed";
 
 const startServer = async () => {
   try {
     await connectDB(config.mongodbUri);
+    await seedDatabase();
 
     app.listen(config.port, () => {
       console.log(`Server running on port ${config.port}`);
