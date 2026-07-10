@@ -6,11 +6,7 @@ import AppError from "../../errorHelpers/AppError";
 
 const getAllCategories = catchAsync(async (_req: Request, res: Response) => {
   const result = await CategoryService.getAllCategories();
-  sendResponse(res, {
-    statusCode: 200,
-    message: "Categories retrieved successfully",
-    data: result,
-  });
+  res.json(result);
 });
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {

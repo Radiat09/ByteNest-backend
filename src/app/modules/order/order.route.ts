@@ -11,7 +11,7 @@ router.post(
   OrderController.stripeWebhookHandler
 );
 
-router.post("/", checkAuth(), OrderController.createOrder);
+router.post("/", OrderController.createOrder);
 router.get("/", checkAuth(), OrderController.getUserOrders);
 router.get("/cancelled", checkAuth(), OrderController.getCancelledOrders);
 router.put("/update/:id", checkAuth("admin"), OrderController.updateOrderStatus);
