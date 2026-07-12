@@ -7,6 +7,8 @@ import cartRoutes from "../modules/cart/cart.route";
 import wishlistRoutes from "../modules/wishlist/wishlist.route";
 import orderRoutes from "../modules/order/order.route";
 import uploadRoutes from "../modules/upload/upload.route";
+import couponRoutes from "../modules/coupon/coupon.route";
+import flashSaleRoutes from "../modules/flash-sale/flash-sale.route";
 
 const router = Router();
 
@@ -19,6 +21,8 @@ const moduleRoutes = [
   { path: "/wishlist", route: wishlistRoutes },
   { path: "/orders", route: orderRoutes },
   { path: "/upload", route: uploadRoutes },
+  { path: "/coupons", route: couponRoutes },
+  { path: "/flash-sales", route: flashSaleRoutes },
 ];
 
 moduleRoutes.forEach(({ path, route }) => router.use(path, route));
