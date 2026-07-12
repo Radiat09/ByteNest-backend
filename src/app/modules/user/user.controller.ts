@@ -27,8 +27,14 @@ const getUserByEmail = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateUser = catchAsync(async (req: AuthRequest, res: Response) => {
-  const { email } = req.body;
-  const result = await UserService.updateUser(email, req.body);
+  const { email, ...updateData } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
+  if (req.user?.role !== "admin" && req.user?.email !== email) {
+    return res.status(403).json({ success: false, message: "You can only update your own profile" });
+  }
+  const result = await UserService.updateUser(email, updateData);
   sendResponse(res, {
     statusCode: 200,
     message: "User updated successfully",
