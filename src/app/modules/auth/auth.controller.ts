@@ -5,6 +5,30 @@ import { generateToken } from "../../utils/jwt";
 import setCookie from "../../utils/setCookie";
 import { UserService } from "../user/user.service";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const loginWithPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Email and password are required" });
+  }
+
+  const user = await UserService.verifyPassword(email, password);
+  if (!user) {
+    return res.status(401).json({ success: false, message: "Invalid email or password" });
+  }
+
+  const token = generateToken({ email: user.email, role: user.role });
+  setCookie(res, token);
+
+  sendResponse(res, {
+    statusCode: 200,
+    message: "Login successful",
+    data: { email: user.email, role: user.role, name: user.name },
+  });
+});
+
 const setJwtToken = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -30,8 +54,8 @@ const setJwtToken = catchAsync(async (req: Request, res: Response) => {
 const clearToken = catchAsync(async (_req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
   sendResponse(res, {
     statusCode: 200,
@@ -41,6 +65,7 @@ const clearToken = catchAsync(async (_req: Request, res: Response) => {
 });
 
 export const AuthController = {
+  loginWithPassword,
   setJwtToken,
   clearToken,
 };
