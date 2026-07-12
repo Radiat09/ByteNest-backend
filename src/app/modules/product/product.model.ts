@@ -14,5 +14,10 @@ const ProductSchema = new Schema<IProduct>(
   { timestamps: true }
 );
 
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ sellCount: -1 });
+ProductSchema.index({ title: "text", description: "text", category: "text" });
+
 const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema);
 export default Product;

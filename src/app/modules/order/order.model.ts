@@ -47,5 +47,8 @@ const OrderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
+OrderSchema.index({ "customerDetail.email": 1, createdAt: -1 });
+OrderSchema.index({ orderStatus: 1 });
+
 const Order: Model<IOrder> = mongoose.model<IOrder>("Order", OrderSchema);
 export default Order;
