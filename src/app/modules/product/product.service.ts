@@ -12,6 +12,10 @@ interface ProductQuery {
   page?: string;
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const buildProductQuery = (queryParams: ProductQuery) => {
   const { categories, minPrice, maxPrice, searchText } = queryParams;
   const query: any = {};
@@ -29,12 +33,12 @@ const buildProductQuery = (queryParams: ProductQuery) => {
   }
 
   if (searchText) {
-    const searchRegex = new RegExp(searchText, "i");
+    const safeText = escapeRegex(searchText);
+    const searchRegex = new RegExp(safeText, "i");
     query.$or = [
       { title: searchRegex },
       { description: searchRegex },
       { category: searchRegex },
-      { price: parseInt(searchText) || 0 },
     ];
   }
 
@@ -65,15 +69,24 @@ const getProducts = async (queryParams: ProductQuery) => {
 
   if (searchText) {
     const text = searchText.toLowerCase();
+    const safeText = escapeRegex(text);
     const getScore = (p: any) => {
       let score = 0;
       const title = p.title?.toLowerCase() || "";
       const category = p.category?.toLowerCase() || "";
       const description = p.description?.toLowerCase() || "";
 
-      if (category.includes(text)) score += 100;
-      if (title.includes(text)) score += 50;
-      if (description.includes(text)) score += 10;
+      try {
+        const re = new RegExp(safeText, "i");
+        if (re.test(category)) score += 100;
+        if (re.test(title)) score += 50;
+        if (re.test(description)) score += 10;
+      } catch {
+        // fallback: plain includes
+        if (category.includes(text)) score += 100;
+        if (title.includes(text)) score += 50;
+        if (description.includes(text)) score += 10;
+      }
       return score;
     };
 
@@ -115,7 +128,8 @@ const deleteProduct = async (id: string): Promise<IProduct | null> => {
 
 const getSearchSuggestions = async (searchText: string): Promise<any[]> => {
   if (!searchText || searchText.trim().length === 0) return [];
-  const regex = new RegExp(searchText, "i");
+  const safeText = escapeRegex(searchText.trim());
+  const regex = new RegExp(safeText, "i");
   return Product.find({
     $or: [{ title: regex }, { category: regex }],
   })
