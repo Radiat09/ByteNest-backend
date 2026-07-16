@@ -36,6 +36,12 @@ const handleStripeWebhook = async (event: any): Promise<void> => {
       await Cart.deleteMany({ _id: { $in: parsedCartIds } });
     }
   }
+
+  if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object;
+    const { orderID } = session.metadata;
+    await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "cancelled" } });
+  }
 };
 
 const getUserOrders = async (email: string): Promise<any[]> => {

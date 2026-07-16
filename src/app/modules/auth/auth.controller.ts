@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { generateToken } from "../../utils/jwt";
@@ -36,9 +37,14 @@ const setJwtToken = catchAsync(async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: "Email is required" });
   }
 
-  const user = await UserService.getUserByEmail(email);
+  let user = await UserService.getUserByEmail(email);
   if (!user) {
-    return res.status(404).json({ success: false, message: "User not found" });
+    user = await UserService.createUser({
+      email,
+      name: email,
+      password: await bcrypt.hash(Math.random().toString(36).slice(-12), 12),
+      customer: true,
+    });
   }
 
   const token = generateToken({ email: user.email, role: user.role });
