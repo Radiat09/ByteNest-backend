@@ -8,53 +8,52 @@ import AppError from "../../errorHelpers/AppError";
 const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
   const { paymentMethod, customerDetail, cartData } = ordersData;
 
+  const newOrder = new Order(ordersData);
+  const orderResult = await newOrder.save();
+  const orderId = orderResult._id.toString();
+
+  if (paymentMethod === "COD") {
+    await Cart.deleteMany({ email: customerDetail!.email.toLowerCase() });
+    return { orderId: orderResult._id, message: "Order placed successfully" };
+  }
+
+  if (paymentMethod === "Stripe") {
+    const url = await createStripeSession(orderId, cartData as any[], customerDetail);
+    return { url };
+  }
+
+  throw new AppError("Invalid payment method", 400);
+};
+
+const handleStripeWebhook = async (event: any): Promise<void> => {
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
 
   try {
-    const newOrder = new Order(ordersData);
-    const orderResult = await newOrder.save({ session: mongoSession });
-    const orderId = orderResult._id.toString();
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+      const sessionData = event.data.object;
+      const { orderID, cartIDs } = sessionData.metadata;
 
-    if (paymentMethod === "COD") {
-      await Cart.deleteMany({ email: customerDetail!.email.toLowerCase() }, { session: mongoSession });
-      await mongoSession.commitTransaction();
-      mongoSession.endSession();
-      return { orderId: orderResult._id, message: "Order placed successfully" };
+      await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "completed" } }, { session: mongoSession });
+
+      if (cartIDs) {
+        const parsedCartIds = JSON.parse(cartIDs);
+        await Cart.deleteMany({ _id: { $in: parsedCartIds } }, { session: mongoSession });
+      }
     }
 
-    if (paymentMethod === "Stripe") {
-      const url = await createStripeSession(orderId, cartData as any[], customerDetail);
-      await mongoSession.commitTransaction();
-      mongoSession.endSession();
-      return { url };
+    if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+      const sessionData = event.data.object;
+      const { orderID } = sessionData.metadata;
+      await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "cancelled" } }, { session: mongoSession });
     }
 
-    throw new AppError("Invalid payment method", 400);
+    await mongoSession.commitTransaction();
   } catch (error) {
     await mongoSession.abortTransaction();
-    mongoSession.endSession();
     throw error;
-  }
-};
-
-const handleStripeWebhook = async (event: any): Promise<void> => {
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const { orderID, cartIDs } = session.metadata;
-
-    await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "completed" } });
-
-    if (cartIDs) {
-      const parsedCartIds = JSON.parse(cartIDs);
-      await Cart.deleteMany({ _id: { $in: parsedCartIds } });
-    }
-  }
-
-  if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
-    const session = event.data.object;
-    const { orderID } = session.metadata;
-    await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "cancelled" } });
+  } finally {
+    mongoSession.endSession();
   }
 };
 
