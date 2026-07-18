@@ -37,8 +37,7 @@ const stripeWebhookHandler = catchAsync(async (req: Request, res: Response) => {
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   } else {
-    // In development, trust the event directly (no Stripe CLI needed)
-    event = req.body as Stripe.Event;
+    event = JSON.parse(req.body.toString()) as Stripe.Event;
   }
 
   await OrderService.handleStripeWebhook(event);
