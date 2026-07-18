@@ -1,15 +1,10 @@
 import { Router } from "express";
-import express from "express";
 import { OrderController } from "./order.controller";
 import { checkAuth } from "../../middlewares/checkAuth";
 
 const router = Router();
 
-router.post(
-  "/webhooks",
-  express.raw({ type: "application/json" }),
-  OrderController.stripeWebhookHandler
-);
+router.post("/webhooks", OrderController.stripeWebhookHandler);
 
 router.post("/", OrderController.createOrder);
 router.get("/", checkAuth(), OrderController.getUserOrders);
