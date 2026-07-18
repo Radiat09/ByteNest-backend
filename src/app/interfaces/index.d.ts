@@ -1,5 +1,11 @@
 import { Request } from "express";
 
+declare module "express" {
+  interface Request {
+    rawBody?: Buffer;
+  }
+}
+
 export interface IUser {
   _id?: string;
   name: string;
