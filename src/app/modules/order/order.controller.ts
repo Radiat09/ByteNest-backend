@@ -28,7 +28,7 @@ const stripeWebhookHandler = catchAsync(async (req: Request, res: Response) => {
     const sig = req.headers["stripe-signature"];
     try {
       event = stripeInstance.webhooks.constructEvent(
-        req.body,
+        req.rawBody!,
         sig!,
         config.stripeWebhookSecret
       );
@@ -37,7 +37,7 @@ const stripeWebhookHandler = catchAsync(async (req: Request, res: Response) => {
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   } else {
-    event = JSON.parse(req.body.toString()) as Stripe.Event;
+    event = req.body as Stripe.Event;
   }
 
   await OrderService.handleStripeWebhook(event);
