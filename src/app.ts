@@ -39,6 +39,27 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+const rawBodySaver = (req: Request, res: Response, next: any) => {
+  const chunks: Buffer[] = [];
+  req.on("data", (chunk: Buffer) => chunks.push(chunk));
+  req.on("end", () => {
+    try {
+      req.rawBody = Buffer.concat(chunks);
+      req.body = JSON.parse(req.rawBody.toString());
+      next();
+    } catch (err) {
+      res.status(400).send("Invalid JSON");
+    }
+  });
+  req.on("error", () => {
+    res.status(400).send("Request error");
+  });
+};
+
+app.use("/orders/webhooks", rawBodySaver);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.get("/", (_req: Request, res: Response) => {
   res.send("Server is running");
 });
