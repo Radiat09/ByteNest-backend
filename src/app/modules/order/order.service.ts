@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "./order.model";
 import Cart from "../cart/cart.model";
 import { IOrder } from "../../interfaces/index.d";
@@ -7,21 +8,34 @@ import AppError from "../../errorHelpers/AppError";
 const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
   const { paymentMethod, customerDetail, cartData } = ordersData;
 
-  const newOrder = new Order(ordersData);
-  const orderResult = await newOrder.save();
-  const orderId = orderResult._id.toString();
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
 
-  if (paymentMethod === "COD") {
-    await Cart.deleteMany({ email: customerDetail!.email.toLowerCase() });
-    return { orderId: orderResult._id, message: "Order placed successfully" };
+  try {
+    const newOrder = new Order(ordersData);
+    const orderResult = await newOrder.save({ session: mongoSession });
+    const orderId = orderResult._id.toString();
+
+    if (paymentMethod === "COD") {
+      await Cart.deleteMany({ email: customerDetail!.email.toLowerCase() }, { session: mongoSession });
+      await mongoSession.commitTransaction();
+      mongoSession.endSession();
+      return { orderId: orderResult._id, message: "Order placed successfully" };
+    }
+
+    if (paymentMethod === "Stripe") {
+      const url = await createStripeSession(orderId, cartData as any[], customerDetail);
+      await mongoSession.commitTransaction();
+      mongoSession.endSession();
+      return { url };
+    }
+
+    throw new AppError("Invalid payment method", 400);
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    mongoSession.endSession();
+    throw error;
   }
-
-  if (paymentMethod === "Stripe") {
-    const url = await createStripeSession(orderId, cartData as any[], customerDetail);
-    return { url };
-  }
-
-  throw new AppError("Invalid payment method", 400);
 };
 
 const handleStripeWebhook = async (event: any): Promise<void> => {
