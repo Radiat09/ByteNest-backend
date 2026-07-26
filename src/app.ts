@@ -44,23 +44,28 @@ const authLimiter = rateLimit({
 app.use("/auth/login", authLimiter);
 app.use("/auth/jwt", authLimiter);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.post(
+  "/webhooks",
+  express.raw({ type: "application/json" }),
+  (req: Request & { rawBody?: Buffer }, _res, next) => {
+    req.rawBody = req.body;
+    next();
+  },
+);
 
 app.post(
   "/orders/webhooks",
   express.raw({ type: "application/json" }),
   (req: Request & { rawBody?: Buffer }, _res, next) => {
-    try {
-      req.rawBody = req.body;
-      req.body = JSON.parse(req.rawBody!.toString());
-    } catch {
-      req.body = {};
-    }
+    req.rawBody = req.body;
     next();
   },
 );
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Server is running");
