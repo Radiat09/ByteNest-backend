@@ -6,7 +6,7 @@ const router = Router();
 
 router.post("/webhooks", OrderController.stripeWebhookHandler);
 
-router.post("/", OrderController.createOrder);
+router.post("/", checkAuth(), OrderController.createOrder);
 router.get("/", checkAuth(), OrderController.getUserOrders);
 router.get("/cancelled", checkAuth(), OrderController.getCancelledOrders);
 router.put("/update/:id", checkAuth("admin"), OrderController.updateOrderStatus);

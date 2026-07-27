@@ -3,12 +3,23 @@ import Stripe from "stripe";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { OrderService } from "./order.service";
+import { UserService } from "../user/user.service";
 import { AuthRequest } from "../../interfaces/index.d";
 import config from "../../config/env";
 
 const stripeInstance = new Stripe(config.stripeSecretKey);
 
 const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const existingUser = await UserService.getUserByEmail(user.email);
+  if (existingUser?.isBanned) {
+    return res.status(403).json({ success: false, message: "Your account has been banned. You cannot place orders." });
+  }
+
   const result = await OrderService.createOrder(req.body);
   if (result.url) {
     return res.status(201).json({ url: result.url });

@@ -20,6 +20,10 @@ const loginWithPassword = catchAsync(async (req: Request, res: Response) => {
     return res.status(401).json({ success: false, message: "Invalid email or password" });
   }
 
+  if (user.isBanned) {
+    return res.status(403).json({ success: false, message: "Your account has been banned. Please contact support." });
+  }
+
   const token = generateToken({ email: user.email, role: user.role });
   setCookie(res, token);
 
@@ -45,6 +49,10 @@ const setJwtToken = catchAsync(async (req: Request, res: Response) => {
       password: await bcrypt.hash(Math.random().toString(36).slice(-12), 12),
       customer: true,
     });
+  }
+
+  if (user.isBanned) {
+    return res.status(403).json({ success: false, message: "Your account has been banned. Please contact support." });
   }
 
   const token = generateToken({ email: user.email, role: user.role });
