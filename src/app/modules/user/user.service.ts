@@ -6,7 +6,7 @@ import { IUser } from "../../interfaces/index.d";
 const SALT_ROUNDS = 12;
 
 const createUser = async (payload: Partial<IUser>): Promise<IUser> => {
-  const existingUser = await User.findOne({ email: payload.email });
+  const existingUser = await User.findOne({ email: payload.email.toLowerCase() });
   if (existingUser) {
     throw new AppError("User already exists", 400);
   }
@@ -21,11 +21,11 @@ const createUser = async (payload: Partial<IUser>): Promise<IUser> => {
 };
 
 const getUserByEmail = async (email: string): Promise<IUser | null> => {
-  return User.findOne({ email });
+  return User.findOne({ email: email.toLowerCase() });
 };
 
 const updateUser = async (email: string, payload: Partial<IUser>): Promise<any> => {
-  return User.updateOne({ email }, { $set: payload });
+  return User.updateOne({ email: email.toLowerCase() }, { $set: payload });
 };
 
 const getAllUsers = async (customer?: string): Promise<IUser[]> => {
@@ -37,11 +37,11 @@ const getAllUsers = async (customer?: string): Promise<IUser[]> => {
 };
 
 const makeAdmin = async (email: string): Promise<any> => {
-  return User.updateOne({ email }, { $set: { role: "admin" } });
+  return User.updateOne({ email: email.toLowerCase() }, { $set: { role: "admin" } });
 };
 
 const verifyPassword = async (email: string, password: string): Promise<IUser | null> => {
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
   if (!user || !user.password) return null;
 
   const isMatch = await bcrypt.compare(password, user.password);
