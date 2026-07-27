@@ -60,6 +60,19 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const toggleMostPopular = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await ProductService.toggleMostPopular(id);
+  if (!result) {
+    throw new AppError("Product not found", 404);
+  }
+  sendResponse(res, {
+    statusCode: 200,
+    message: "Product popularity updated successfully",
+    data: result,
+  });
+});
+
 const getSearchSuggestions = catchAsync(async (req: Request, res: Response) => {
   const searchText = (req.query.searchText as string) || "";
   const result = await ProductService.getSearchSuggestions(searchText);
@@ -74,4 +87,5 @@ export const ProductController = {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleMostPopular,
 };

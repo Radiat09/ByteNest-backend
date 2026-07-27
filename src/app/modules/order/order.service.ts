@@ -3,6 +3,24 @@ import Order from "./order.model";
 import { IOrder } from "../../interfaces/index.d";
 import createStripeSession from "./order.stripe";
 import AppError from "../../errorHelpers/AppError";
+import Product from "../product/product.model";
+
+const incrementProductSellCount = async (cartData: any[]): Promise<void> => {
+  if (!cartData || !Array.isArray(cartData)) return;
+  
+  const bulkOps = cartData
+    .filter((item: any) => item.productId && item.quantity > 0)
+    .map((item: any) => ({
+      updateOne: {
+        filter: { _id: item.productId },
+        update: { $inc: { sellCount: item.quantity } },
+      },
+    }));
+
+  if (bulkOps.length > 0) {
+    await Product.bulkWrite(bulkOps);
+  }
+};
 
 const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
   const { paymentMethod, customerDetail, cartData } = ordersData;
@@ -14,6 +32,9 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
     if (paymentMethod === "COD") {
       const newOrder = new Order(ordersData);
       const orderResult = await newOrder.save({ session: mongoSession });
+      
+      await incrementProductSellCount(cartData as any[]);
+      
       await mongoSession.commitTransaction();
       mongoSession.endSession();
       return { orderId: orderResult._id, message: "Order placed successfully" };
@@ -38,6 +59,10 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
         { $set: { paymentStatus } },
         { session: mongoSession }
       );
+
+      if (paymentStatus === "completed") {
+        await incrementProductSellCount(cartData as any[]);
+      }
 
       await mongoSession.commitTransaction();
       mongoSession.endSession();

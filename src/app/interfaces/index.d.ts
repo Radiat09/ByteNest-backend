@@ -26,7 +26,8 @@ export interface IProduct {
   discountedPrice?: number | null;
   category: string;
   imageUrl: string[];
-  sellCount: number;
+    sellCount: number;
+    mostPopular: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

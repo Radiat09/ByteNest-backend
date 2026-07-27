@@ -10,6 +10,7 @@ interface ProductQuery {
   sortBy?: string;
   sortOrder?: string;
   page?: string;
+  mostPopular?: string;
 }
 
 function escapeRegex(str: string): string {
@@ -40,6 +41,10 @@ const buildProductQuery = (queryParams: ProductQuery) => {
       { description: searchRegex },
       { category: searchRegex },
     ];
+  }
+
+  if (mostPopular && mostPopular === "true") {
+    query.mostPopular = true;
   }
 
   return query;
@@ -126,6 +131,12 @@ const deleteProduct = async (id: string): Promise<IProduct | null> => {
   return Product.findByIdAndDelete(id);
 };
 
+const toggleMostPopular = async (id: string): Promise<IProduct | null> => {
+  const product = await Product.findById(id);
+  if (!product) return null;
+  return Product.findByIdAndUpdate(id, { $set: { mostPopular: !product.mostPopular } }, { new: true });
+};
+
 const getSearchSuggestions = async (searchText: string): Promise<any[]> => {
   if (!searchText || searchText.trim().length === 0) return [];
   const safeText = escapeRegex(searchText.trim());
@@ -146,4 +157,5 @@ export const ProductService = {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleMostPopular,
 };

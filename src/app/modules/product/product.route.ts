@@ -7,9 +7,11 @@ const router = Router();
 router.get("/", ProductController.getProducts);
 router.get("/suggestions", ProductController.getSearchSuggestions);
 router.get("/count", ProductController.getProductCount);
+router.get("/suggestions", ProductController.getSearchSuggestions);
 router.get("/:id", ProductController.getProductById);
 router.post("/", checkAuth("admin"), ProductController.createProduct);
 router.put("/update/:id", checkAuth("admin"), ProductController.updateProduct);
+router.put("/toggle-most-popular/:id", checkAuth("admin"), ProductController.toggleMostPopular);
 router.delete("/delete/:id", checkAuth("admin"), ProductController.deleteProduct);
 
 export default router;

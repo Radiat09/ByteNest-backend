@@ -10,6 +10,7 @@ const ProductSchema = new Schema<IProduct>(
     category: { type: String, required: true, trim: true },
     imageUrl: [{ type: String }],
     sellCount: { type: Number, default: 0 },
+    mostPopular: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
