@@ -34,7 +34,7 @@ const createStripeSession = async (
   return {
     url: session.url!,
     payment_status: session.payment_status,
-    status: session.status,
+    status: session.status!,
   };
 };
 

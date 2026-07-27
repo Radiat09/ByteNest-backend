@@ -6,6 +6,9 @@ import { IUser } from "../../interfaces/index.d";
 const SALT_ROUNDS = 12;
 
 const createUser = async (payload: Partial<IUser>): Promise<IUser> => {
+  if (!payload.email) {
+    throw new AppError("Email is required", 400);
+  }
   const existingUser = await User.findOne({ email: payload.email.toLowerCase() });
   if (existingUser) {
     throw new AppError("User already exists", 400);
