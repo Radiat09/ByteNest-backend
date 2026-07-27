@@ -18,7 +18,7 @@ function escapeRegex(str: string): string {
 }
 
 const buildProductQuery = (queryParams: ProductQuery) => {
-  const { categories, minPrice, maxPrice, searchText } = queryParams;
+  const { categories, minPrice, maxPrice, searchText, mostPopular } = queryParams;
   const query: any = {};
 
   if (categories) {
