@@ -62,10 +62,32 @@ const makeAdmin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const banUser = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await UserService.banUser(email);
+  sendResponse(res, {
+    statusCode: 200,
+    message: "User banned successfully",
+    data: result,
+  });
+});
+
+const unbanUser = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await UserService.unbanUser(email);
+  sendResponse(res, {
+    statusCode: 200,
+    message: "User unbanned successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserByEmail,
   updateUser,
   getAllUsers,
   makeAdmin,
+  banUser,
+  unbanUser,
 };

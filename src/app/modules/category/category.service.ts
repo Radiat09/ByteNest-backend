@@ -14,8 +14,13 @@ const deleteCategory = async (id: string): Promise<ICategory | null> => {
   return Category.findByIdAndDelete(id);
 };
 
+const updateCategory = async (id: string, payload: Partial<ICategory>): Promise<ICategory | null> => {
+  return Category.findByIdAndUpdate(id, { $set: payload }, { new: true });
+};
+
 export const CategoryService = {
   getAllCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
 };

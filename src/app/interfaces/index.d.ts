@@ -13,6 +13,7 @@ export interface IUser {
   password?: string;
   role: "user" | "admin";
   customer: boolean;
+  isBanned: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -40,6 +40,14 @@ const makeAdmin = async (email: string): Promise<any> => {
   return User.updateOne({ email: email.toLowerCase() }, { $set: { role: "admin" } });
 };
 
+const banUser = async (email: string): Promise<any> => {
+  return User.updateOne({ email: email.toLowerCase() }, { $set: { isBanned: true } });
+};
+
+const unbanUser = async (email: string): Promise<any> => {
+  return User.updateOne({ email: email.toLowerCase() }, { $set: { isBanned: false } });
+};
+
 const verifyPassword = async (email: string, password: string): Promise<IUser | null> => {
   const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
   if (!user || !user.password) return null;
@@ -56,5 +64,7 @@ export const UserService = {
   updateUser,
   getAllUsers,
   makeAdmin,
+  banUser,
+  unbanUser,
   verifyPassword,
 };

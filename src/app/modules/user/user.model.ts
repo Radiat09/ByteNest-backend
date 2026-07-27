@@ -8,6 +8,7 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, select: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     customer: { type: Boolean, default: false },
+    isBanned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -31,8 +31,22 @@ const deleteCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateCategory = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await CategoryService.updateCategory(id, req.body);
+  if (!result) {
+    throw new AppError("Category not found", 404);
+  }
+  sendResponse(res, {
+    statusCode: 200,
+    message: "Category updated successfully",
+    data: result,
+  });
+});
+
 export const CategoryController = {
   getAllCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
 };

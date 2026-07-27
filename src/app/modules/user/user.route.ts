@@ -9,5 +9,7 @@ router.post("/", UserController.createUser);
 router.put("/update", checkAuth(), UserController.updateUser);
 router.get("/", checkAuth("admin"), UserController.getAllUsers);
 router.put("/role", checkAuth("admin"), UserController.makeAdmin);
+router.put("/ban", checkAuth("admin"), UserController.banUser);
+router.put("/unban", checkAuth("admin"), UserController.unbanUser);
 
 export default router;
