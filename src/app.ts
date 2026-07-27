@@ -41,8 +41,13 @@ const authLimiter = rateLimit({
   },
 });
 
-app.use("/auth/login", authLimiter);
-app.use("/auth/jwt", authLimiter);
+const limiterMiddleware =
+  config.nodeEnv === "production" ? apiLimiter : (req: any, res: any, next: any) => next();
+const authLimiterMiddleware =
+  config.nodeEnv === "production" ? authLimiter : (req: any, res: any, next: any) => next();
+
+app.use("/auth/login", authLimiterMiddleware);
+app.use("/auth/jwt", authLimiterMiddleware);
 
 app.use(cookieParser());
 
@@ -71,7 +76,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.send("Server is running");
 });
 
-app.use("/", apiLimiter, routes);
+app.use("/", limiterMiddleware, routes);
 
 app.use(notFound);
 app.use(globalErrorHandler);
