@@ -76,7 +76,6 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
     throw error;
   }
 };
-
 const handleStripeWebhook = async (event: any): Promise<void> => {
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
@@ -86,12 +85,21 @@ const handleStripeWebhook = async (event: any): Promise<void> => {
       const sessionData = event.data.object;
       const { orderID } = sessionData.metadata;
 
-      await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "completed" } }, { session: mongoSession });
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderID,
+        { $set: { paymentStatus: "completed" } },
+        { session: mongoSession, new: true }
+      );
+
+      if (updatedOrder && Array.isArray(updatedOrder.cartData)) {
+        await incrementProductSellCount(updatedOrder.cartData);
+      }
     }
 
     if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
       const sessionData = event.data.object;
       const { orderID } = sessionData.metadata;
+
       await Order.findByIdAndUpdate(orderID, { $set: { paymentStatus: "cancelled" } }, { session: mongoSession });
     }
 
