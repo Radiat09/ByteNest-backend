@@ -41,7 +41,7 @@ const makeAdmin = async (email: string): Promise<any> => {
 };
 
 const verifyPassword = async (email: string, password: string): Promise<IUser | null> => {
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select("+password");
   if (!user || !user.password) return null;
 
   const isMatch = await bcrypt.compare(password, user.password);
