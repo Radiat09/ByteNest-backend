@@ -5,6 +5,7 @@ const ProductSchema = new Schema<IProduct>(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
+    detailedDescription: { type: String, trim: true },
     price: { type: Number, required: true },
     discountedPrice: { type: Number, default: null },
     category: { type: String, required: true, trim: true },
@@ -18,7 +19,7 @@ const ProductSchema = new Schema<IProduct>(
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ sellCount: -1 });
-ProductSchema.index({ title: "text", description: "text", category: "text" });
+ProductSchema.index({ title: "text", description: "text", detailedDescription: "text", category: "text" });
 
 const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema);
 export default Product;
