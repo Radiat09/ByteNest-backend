@@ -72,6 +72,7 @@ export interface IOrder {
   cartData: IOrderItem[];
   totalPrice: number;
   discount: number;
+  couponCode?: string;
   paymentMethod: "COD" | "Stripe";
   paymentStatus: "pending" | "completed" | "failed" | "cancelled";
   orderStatus: "pending" | "completed" | "cancelled";

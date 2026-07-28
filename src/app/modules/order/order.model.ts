@@ -25,13 +25,14 @@ const OrderItemSchema = new Schema(
   { _id: false }
 );
 
-const OrderSchema = new Schema<IOrder>(
-  {
-    customerDetail: { type: CustomerDetailSchema, required: true },
-    cartData: { type: [OrderItemSchema], required: true },
-    totalPrice: { type: Number, required: true },
-    discount: { type: Number, default: 0 },
-    paymentMethod: { type: String, enum: ["COD", "Stripe"], required: true },
+  const OrderSchema = new Schema<IOrder>(
+    {
+      customerDetail: { type: CustomerDetailSchema, required: true },
+      cartData: { type: [OrderItemSchema], required: true },
+      totalPrice: { type: Number, required: true },
+      discount: { type: Number, default: 0 },
+      couponCode: { type: String },
+      paymentMethod: { type: String, enum: ["COD", "Stripe"], required: true },
     paymentStatus: {
       type: String,
       enum: ["pending", "completed", "failed", "cancelled"],

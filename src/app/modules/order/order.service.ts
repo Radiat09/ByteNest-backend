@@ -4,6 +4,7 @@ import { IOrder } from "../../interfaces/index.d";
 import createStripeSession from "./order.stripe";
 import AppError from "../../errorHelpers/AppError";
 import Product from "../product/product.model";
+import { CouponService } from "../coupon/coupon.service";
 
 const incrementProductSellCount = async (cartData: any[]): Promise<void> => {
   if (!cartData || !Array.isArray(cartData)) return;
@@ -23,7 +24,7 @@ const incrementProductSellCount = async (cartData: any[]): Promise<void> => {
 };
 
 const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
-  const { paymentMethod, customerDetail, cartData } = ordersData;
+  const { paymentMethod, customerDetail, cartData, couponCode } = ordersData;
 
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
@@ -32,9 +33,13 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
     if (paymentMethod === "COD") {
       const newOrder = new Order(ordersData);
       const orderResult = await newOrder.save({ session: mongoSession });
-      
+
       await incrementProductSellCount(cartData as any[]);
-      
+
+      if (couponCode) {
+        await CouponService.applyCoupon(couponCode);
+      }
+
       await mongoSession.commitTransaction();
       mongoSession.endSession();
       return { orderId: orderResult._id, message: "Order placed successfully" };
@@ -62,6 +67,10 @@ const createOrder = async (ordersData: Partial<IOrder>): Promise<any> => {
 
       if (paymentStatus === "completed") {
         await incrementProductSellCount(cartData as any[]);
+
+        if (couponCode) {
+          await CouponService.applyCoupon(couponCode);
+        }
       }
 
       await mongoSession.commitTransaction();
@@ -93,6 +102,10 @@ const handleStripeWebhook = async (event: any): Promise<void> => {
 
       if (updatedOrder && Array.isArray(updatedOrder.cartData)) {
         await incrementProductSellCount(updatedOrder.cartData);
+      }
+
+      if (updatedOrder?.couponCode) {
+        await CouponService.applyCoupon(updatedOrder.couponCode);
       }
     }
 
