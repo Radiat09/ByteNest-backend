@@ -11,12 +11,30 @@ export const CloudinaryService = {
   async uploadBuffer(buffer: Buffer, folder: string = "products") {
     return new Promise<{ url: string; publicId: string }>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder, resource_type: "image" },
+        {
+          folder,
+          resource_type: "image",
+          eager: [
+            {
+              width: 1200,
+              height: 1200,
+              crop: "fill",
+              gravity: "auto",
+              format: "auto",
+              quality: "auto",
+            },
+          ],
+          eager_async: true,
+        },
         (error, result) => {
           if (error || !result) {
             return reject(error || new Error("Upload failed"));
           }
-          resolve({ url: result.secure_url, publicId: result.public_id });
+          const transformed = result.eager?.[0];
+          resolve({
+            url: transformed?.secure_url || result.secure_url,
+            publicId: result.public_id,
+          });
         }
       );
       stream.end(buffer);
