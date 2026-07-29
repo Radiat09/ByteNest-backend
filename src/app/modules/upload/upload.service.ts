@@ -19,7 +19,6 @@ export const CloudinaryService = {
               width: 1200,
               height: 1200,
               crop: "fill",
-              gravity: "auto",
               format: "auto",
               quality: "auto",
             },
